@@ -4,6 +4,7 @@ A tool for modifying the Rspec files in a Rails project by adding a flow trackin
 
 ### Usage
 
+```
 Usage: rspec_reader [OPTIONS] --path <PATH> --output <OUTPUT>
 
 Options:
@@ -12,5 +13,5 @@ Options:
   -o, --output <OUTPUT>  Path of the output directory
   -h, --help             Print help
   -V, --version          Print version
-
+```
 The --path will take the root directory of the Rails project and --output will take the name of output directory which contains the modified Rspec files.
