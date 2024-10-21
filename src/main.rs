@@ -5,6 +5,8 @@ use std::io::Write;
 use std::path::Path;
 use std::ffi::OsStr;
 use clap::Parser;
+use regex::Regex;
+use regex::Captures;
 
 
 #[derive(Parser)]
@@ -46,28 +48,67 @@ impl CodeModifier for FileNode {
         }
         let mut start_stop = String::new();
         start_stop.push_str("require 'uri'\nrequire 'net/http'\n");
-        start_stop.push_str("def start()\n");
+        start_stop.push_str("def flow_step(flow,step)\n");
         start_stop.push_str("\turi = URI('https://api.nasa.gov/planetary/apod')\n");
+        start_stop.push_str("\tparams = {{ :flow => flow, :step => step }}\n");
+        start_stop.push_str("\turi.query = URI.encode_www_form(params)\n");
         start_stop.push_str("\tres = Net::HTTP.get_response(uri)\n");
         start_stop.push_str("end\n");
-        start_stop.push_str("\n");
-        start_stop.push_str("def stop()\n");
-        start_stop.push_str("\turi = URI('https://api.nasa.gov/planetary/apod')\n");
-        start_stop.push_str("\tres = Net::HTTP.get_response(uri)\n");
-        start_stop.push_str("end\n");
+        // start_stop.push_str("\n");
+        // start_stop.push_str("def stop(flow,step)\n");
+        // start_stop.push_str("\turi = URI('https://api.nasa.gov/planetary/apod')\n");
+        // start_stop.push_str("\tres = Net::HTTP.get_response(uri)\n");
+        // start_stop.push_str("end\n");
         let mut new_code = String::new();
         let old_code = String::from(std::str::from_utf8(self.content()).unwrap());
         new_code.push_str(start_stop.as_str());
+        let re = Regex::new(r"'.*'").unwrap();
+        let re2 = Regex::new("\".*\"").unwrap();
+        let mut flows: Vec<String> = Vec::new();
+        let mut flow: &str = "";
         for i in old_code.lines(){
+            let mut spaces: u64 = 0;
             if i.ends_with("do") {
+                let flow_ = match re.captures(&i) {
+                    Some(x) => x.get(0).unwrap().as_str(),
+                    None => {
+                        let flow2 = re2.captures(&i);
+                        match flow2 {
+                            Some(y) => {
+                                y.get(0).unwrap().as_str()
+                            },
+                            None => "",
+                        }
+                    },
+                };
+                flows.push(flow_.to_string());
+                // println!("{:?}",flow.as_ref().unwrap().get(0).unwrap().as_str());
                 new_code.push_str(i);
                 new_code.push_str("\n");
-                new_code.push_str("start()\n");
+                let flow = if !flows.is_empty() {
+                    flows.get(flows.len() - 1).expect(format!("Current stack: {:?}",flows).as_str()).as_str()
+                } else {
+                    ""
+                };
+                new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"start").as_str());
             } else if i.ends_with("end"){
-                new_code.push_str("stop()\n");
+                let flow = if !flows.is_empty() {
+                    flows.get(flows.len() - 1).expect(format!("Current stack: {:?}",flows).as_str()).as_str()
+                } else {
+                    ""
+                };
+                new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"stop").as_str());
                 new_code.push_str(i);
+                flows.pop();
                 new_code.push_str("\n");
             } else {
+                i.chars()
+                    .for_each(|x| {
+                    if x == ' '{
+                        spaces += 1;
+                    } 
+                }
+                );
                 new_code.push_str(i);
                 new_code.push_str("\n");
             }
