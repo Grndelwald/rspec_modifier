@@ -12,9 +12,6 @@ use regex::Captures;
 #[derive(Parser)]
 #[command(author,version,about)]
 struct Args{
-    /// Comma separated names of extension like .rs, .rb, .cpp
-    #[arg(short,long)]
-    files: Option<String>,
     /// Path of the root directory
     #[arg(short,long)]
     path: String,

@@ -1,5 +1,5 @@
 [package]
-name = "rspec_reader"
+name = "rspec_modofier"
 version = "0.3.0"
 edition = "2021"
 
