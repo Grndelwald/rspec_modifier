@@ -5,7 +5,7 @@ A tool for modifying the Rspec files in a Rails project by adding a flow trackin
 ### Usage
 
 ```
-Usage: rspec_reader [OPTIONS] --path <PATH> --output <OUTPUT>
+Usage: rspec_modifier [OPTIONS] --path <PATH> --output <OUTPUT>
 
 Options:
   -p, --path <PATH>      Path of the source root directory
