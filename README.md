@@ -8,8 +8,7 @@ A tool for modifying the Rspec files in a Rails project by adding a flow trackin
 Usage: rspec_reader [OPTIONS] --path <PATH> --output <OUTPUT>
 
 Options:
-  -f, --files <FILES>    Comma separated names of extension like .rs, .rb, .cpp
-  -p, --path <PATH>      Path of the root directory
+  -p, --path <PATH>      Path of the source root directory
   -o, --output <OUTPUT>  Path of the output directory
   -h, --help             Print help
   -V, --version          Print version
