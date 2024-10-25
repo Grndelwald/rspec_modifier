@@ -238,7 +238,7 @@ fn build_tree(current_dir: &Path, args: &Args) -> Option<NodeType> {
             ));
         return node;
     } else {
-        panic!("Unknown type");
+        None
     }
 }
 
