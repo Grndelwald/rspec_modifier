@@ -47,7 +47,7 @@ impl CodeModifier for FileNode {
         start_stop.push_str("require 'uri'\nrequire 'net/http'\n");
         start_stop.push_str("def flow_step(flow,step)\n");
         start_stop.push_str("\turi = URI('https://api.nasa.gov/planetary/apod')\n");
-        start_stop.push_str("\tparams = {{ :flow => flow, :step => step }}\n");
+        start_stop.push_str("\tparams = { :flow => flow, :step => step }\n");
         start_stop.push_str("\turi.query = URI.encode_www_form(params)\n");
         start_stop.push_str("\tres = Net::HTTP.get_response(uri)\n");
         start_stop.push_str("end\n");
@@ -61,12 +61,20 @@ impl CodeModifier for FileNode {
         new_code.push_str(start_stop.as_str());
         let re = Regex::new(r"'.*'").unwrap();
         let re2 = Regex::new("\".*\"").unwrap();
+        let before_all = Regex::new(r".*(before\(:all).*").unwrap();
+        let before_each = Regex::new(r".*(before\(:each).*").unwrap();
+        let after_all = Regex::new(r".*(after\(:all).*").unwrap();
+        let after_each = Regex::new(r".*(after\(:each).*").unwrap();
         let mut flows: Vec<String> = Vec::new();
+        let regexs: Vec<(Regex,&str)> = vec![(before_all,"before_all"),
+                                    (before_each,"before_each"),
+                                    (after_all,"after_all"),
+                                    (after_each,"after_each")];
         let mut flow: &str = "";
         for i in old_code.lines(){
             let mut spaces: u64 = 0;
             if i.ends_with("do") {
-                let flow_ = match re.captures(&i) {
+                let mut flow_ = match re.captures(&i) {
                     Some(x) => x.get(0).unwrap().as_str(),
                     None => {
                         let flow2 = re2.captures(&i);
@@ -78,6 +86,21 @@ impl CodeModifier for FileNode {
                         }
                     },
                 };
+                if flow_.is_empty() {
+                    for j in regexs.iter() {
+                        flow_ = match j.0.captures(&i) {
+                            Some(_) => {
+                                j.1
+                            },
+                            None => {
+                                ""
+                            },
+                        };
+                        if !flow_.is_empty(){
+                            break;
+                        }
+                    }
+                }
                 flows.push(flow_.to_string());
                 // println!("{:?}",flow.as_ref().unwrap().get(0).unwrap().as_str());
                 new_code.push_str(i);
