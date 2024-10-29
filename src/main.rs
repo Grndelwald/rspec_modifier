@@ -38,6 +38,16 @@ trait CodeModifier: CodeReader{
     fn modify(&self) -> Option<String>;
 }
 
+fn is_unnecessary_start(string: &str) -> bool {
+    string.contains("class ") || 
+    string.contains("def ") || 
+    string.contains("if ") ||
+    string.contains("until ") ||
+    string.contains("loop ") ||
+    string.contains("for ") ||
+    string.contains("case ")
+}
+
 impl CodeModifier for FileNode {
     fn modify(&self) -> Option<String>{
         if !self.name.as_str().ends_with("spec.rb") {
@@ -61,19 +71,30 @@ impl CodeModifier for FileNode {
         new_code.push_str(start_stop.as_str());
         let re = Regex::new(r"'.*'").unwrap();
         let re2 = Regex::new("\".*\"").unwrap();
-        let before_all = Regex::new(r".*(before\(:all).*").unwrap();
-        let before_each = Regex::new(r".*(before\(:each).*").unwrap();
-        let after_all = Regex::new(r".*(after\(:all).*").unwrap();
-        let after_each = Regex::new(r".*(after\(:each).*").unwrap();
+        let before_all = Regex::new(r".*(before\(:all).*do.*").unwrap();
+        let before_each = Regex::new(r".*(before\(:each).*do.*").unwrap();
+        let after_all = Regex::new(r".*(after\(:all).*do.*").unwrap();
+        let after_each = Regex::new(r".*(after\(:each).*do.*").unwrap();
+        let before_all_2 = Regex::new(r".*(before_all).*do.*").unwrap();
+        let before = Regex::new(r".*(before).*do.*").unwrap();
+        let after = Regex::new(r".*(after).*do.*").unwrap();
+        let after_all_2 = Regex::new(r".*(after_all).*do.*").unwrap();
         let mut flows: Vec<String> = Vec::new();
+        let mut skips: Vec<bool> = Vec::new();
         let regexs: Vec<(Regex,&str)> = vec![(before_all,"before_all"),
                                     (before_each,"before_each"),
                                     (after_all,"after_all"),
-                                    (after_each,"after_each")];
+                                    (after_each,"after_each"),
+                                    (before_all_2,"before_all"),
+                                    (before, "before"),
+                                    (after, "after"),
+                                    (after_all_2,"after_all"),
+                                    ];
         let mut flow: &str = "";
         for i in old_code.lines(){
             let mut spaces: u64 = 0;
-            if i.ends_with("do") {
+            if i.ends_with("do") || i.contains(" do |") {
+                skips.push(false);
                 let mut flow_ = match re.captures(&i) {
                     Some(x) => x.get(0).unwrap().as_str(),
                     None => {
@@ -112,16 +133,21 @@ impl CodeModifier for FileNode {
                 };
                 new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"start").as_str());
             } else if i.ends_with("end"){
-                let flow = if !flows.is_empty() {
-                    flows.get(flows.len() - 1).expect(format!("Current stack: {:?}",flows).as_str()).as_str()
-                } else {
-                    ""
-                };
-                new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"stop").as_str());
+                if !skips.is_empty() && !skips.pop().unwrap() {
+                    let flow = if !flows.is_empty() {
+                        flows.get(flows.len() - 1).expect(format!("Current stack: {:?}",flows).as_str()).as_str()
+                    } else {
+                        ""
+                    };
+                    new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"stop").as_str());
+                }
                 new_code.push_str(i);
                 flows.pop();
                 new_code.push_str("\n");
             } else {
+                if is_unnecessary_start(i) {
+                    skips.push(true);
+                }
                 i.chars()
                     .for_each(|x| {
                     if x == ' '{
