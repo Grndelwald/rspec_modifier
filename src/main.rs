@@ -131,7 +131,7 @@ impl CodeModifier for FileNode {
                 } else {
                     ""
                 };
-                new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"start").as_str());
+                new_code.push_str(format!("flow_step({},{})\n",flow,"start").as_str());
             } else if i.ends_with("end"){
                 if !skips.is_empty() && !skips.pop().unwrap() {
                     let flow = if !flows.is_empty() {
@@ -139,7 +139,7 @@ impl CodeModifier for FileNode {
                     } else {
                         ""
                     };
-                    new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"stop").as_str());
+                    new_code.push_str(format!("flow_step({},{})\n",flow,"stop").as_str());
                 }
                 new_code.push_str(i);
                 flows.pop();
