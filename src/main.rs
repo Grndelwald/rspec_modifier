@@ -95,18 +95,19 @@ impl CodeModifier for FileNode {
             let mut spaces: u64 = 0;
             if i.ends_with("do") || i.contains(" do |") {
                 skips.push(false);
-                let mut flow_ = match re.captures(&i) {
-                    Some(x) => x.get(0).unwrap().as_str(),
-                    None => {
-                        let flow2 = re2.captures(&i);
-                        match flow2 {
-                            Some(y) => {
-                                y.get(0).unwrap().as_str()
-                            },
-                            None => "",
-                        }
-                    },
-                };
+                // let mut flow_ = match re.captures(&i) {
+                //     Some(x) => x.get(0).unwrap().as_str(),
+                //     None => {
+                //         let flow2 = re2.captures(&i);
+                //         match flow2 {
+                //             Some(y) => {
+                //                 y.get(0).unwrap().as_str()
+                //             },
+                //             None => "",
+                //         }
+                //     },
+                // };
+                let mut flow_ = "";
                 if flow_.is_empty() {
                     for j in regexs.iter() {
                         flow_ = match j.0.captures(&i) {
@@ -131,7 +132,8 @@ impl CodeModifier for FileNode {
                 } else {
                     ""
                 };
-                new_code.push_str(format!("flow_step({},{})\n",flow,"start").as_str());
+                //new_code.push_str(format!("flow_step(\"{}\",{:?})\n",flow,"start").as_str());
+                new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"start").as_str());
             } else if i.ends_with("end"){
                 if !skips.is_empty() && !skips.pop().unwrap() {
                     let flow = if !flows.is_empty() {
@@ -139,7 +141,8 @@ impl CodeModifier for FileNode {
                     } else {
                         ""
                     };
-                    new_code.push_str(format!("flow_step({},{})\n",flow,"stop").as_str());
+                    //new_code.push_str(format!("flow_step(\"{}\",{:?})\n",flow,"stop").as_str());
+                    new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"stop").as_str());
                 }
                 new_code.push_str(i);
                 flows.pop();
