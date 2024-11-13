@@ -56,7 +56,7 @@ impl CodeModifier for FileNode {
         let mut start_stop = String::new();
         start_stop.push_str("require 'uri'\nrequire 'net/http'\n");
         start_stop.push_str("def flow_step(flow,step)\n");
-        start_stop.push_str("\turi = URI('https://api.nasa.gov/planetary/apod')\n");
+        start_stop.push_str("\turi = URI('https://dast.ayanr.io/planetary/apod')\n");
         start_stop.push_str("\tparams = { :flow => flow, :step => step }\n");
         start_stop.push_str("\turi.query = URI.encode_www_form(params)\n");
         start_stop.push_str("\tres = Net::HTTP.get_response(uri)\n");
@@ -96,7 +96,7 @@ impl CodeModifier for FileNode {
         rspec_code.push_str("flow_start(x.description,\"start\")\n");
         rspec_code.push_str("end\n");
         rspec_code.push_str("config.after(:each) do |x| \n");
-        rspec_code.push_str("flow_start(x.description,\"start\")\n");
+        rspec_code.push_str("flow_start(x.description,\"stop\")\n");
         rspec_code.push_str("end\n");
         rspec_code.push_str("end\n\n");
         new_code.push_str(rspec_code.as_str());
