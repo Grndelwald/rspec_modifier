@@ -50,7 +50,7 @@ fn is_unnecessary_start(string: &str) -> bool {
 
 impl CodeModifier for FileNode {
     fn modify(&self) -> Option<String>{
-        if !self.name.as_str().ends_with("spec.rb") {
+        if !self.name.as_str().ends_with("spec_helper.rb") {
             return None;
         }
         let mut start_stop = String::new();
@@ -61,107 +61,45 @@ impl CodeModifier for FileNode {
         start_stop.push_str("\turi.query = URI.encode_www_form(params)\n");
         start_stop.push_str("\tres = Net::HTTP.get_response(uri)\n");
         start_stop.push_str("end\n");
-        // start_stop.push_str("\n");
-        // start_stop.push_str("def stop(flow,step)\n");
-        // start_stop.push_str("\turi = URI('https://api.nasa.gov/planetary/apod')\n");
-        // start_stop.push_str("\tres = Net::HTTP.get_response(uri)\n");
-        // start_stop.push_str("end\n");
         let mut new_code = String::new();
         let old_code = String::from(std::str::from_utf8(self.content()).unwrap());
         new_code.push_str(start_stop.as_str());
-        let re = Regex::new(r"'.*'").unwrap();
-        let re2 = Regex::new("\".*\"").unwrap();
-        let before_all = Regex::new(r".*(before\(:all).*do.*").unwrap();
-        let before_each = Regex::new(r".*(before\(:each).*do.*").unwrap();
-        let after_all = Regex::new(r".*(after\(:all).*do.*").unwrap();
-        let after_each = Regex::new(r".*(after\(:each).*do.*").unwrap();
-        let before_all_2 = Regex::new(r".*(before_all).*do.*").unwrap();
-        let before = Regex::new(r".*(before).*do.*").unwrap();
-        let after = Regex::new(r".*(after).*do.*").unwrap();
-        let after_all_2 = Regex::new(r".*(after_all).*do.*").unwrap();
-        let mut flows: Vec<String> = Vec::new();
-        let mut skips: Vec<bool> = Vec::new();
-        let regexs: Vec<(Regex,&str)> = vec![(before_all,"before_all"),
-                                    (before_each,"before_each"),
-                                    (after_all,"after_all"),
-                                    (after_each,"after_each"),
-                                    (before_all_2,"before_all"),
-                                    (before, "before"),
-                                    (after, "after"),
-                                    (after_all_2,"after_all"),
-                                    ];
-        let mut flow: &str = "";
+        // let re = Regex::new(r"'.*'").unwrap();
+        // let re2 = Regex::new("\".*\"").unwrap();
+        // let before_all = Regex::new(r".*(before\(:all).*do.*").unwrap();
+        // let before_each = Regex::new(r".*(before\(:each).*do.*").unwrap();
+        // let after_all = Regex::new(r".*(after\(:all).*do.*").unwrap();
+        // let after_each = Regex::new(r".*(after\(:each).*do.*").unwrap();
+        // let before_all_2 = Regex::new(r".*(before_all).*do.*").unwrap();
+        // let before = Regex::new(r".*(before).*do.*").unwrap();
+        // let after = Regex::new(r".*(after).*do.*").unwrap();
+        // let after_all_2 = Regex::new(r".*(after_all).*do.*").unwrap();
+        // let mut flows: Vec<String> = Vec::new();
+        // let mut skips: Vec<bool> = Vec::new();
+        // let regexs: Vec<(Regex,&str)> = vec![(before_all,"before_all"),
+        //                             (before_each,"before_each"),
+        //                             (after_all,"after_all"),
+        //                             (after_each,"after_each"),
+        //                             (before_all_2,"before_all"),
+        //                             (before, "before"),
+        //                             (after, "after"),
+        //                             (after_all_2,"after_all"),
+        //                             ];
+        // let mut flow: &str = "";
         for i in old_code.lines(){
-            let mut spaces: u64 = 0;
-            if i.ends_with("do") || i.contains(" do |") {
-                skips.push(false);
-                // let mut flow_ = match re.captures(&i) {
-                //     Some(x) => x.get(0).unwrap().as_str(),
-                //     None => {
-                //         let flow2 = re2.captures(&i);
-                //         match flow2 {
-                //             Some(y) => {
-                //                 y.get(0).unwrap().as_str()
-                //             },
-                //             None => "",
-                //         }
-                //     },
-                // };
-                let mut flow_ = "";
-                if flow_.is_empty() {
-                    for j in regexs.iter() {
-                        flow_ = match j.0.captures(&i) {
-                            Some(_) => {
-                                j.1
-                            },
-                            None => {
-                                ""
-                            },
-                        };
-                        if !flow_.is_empty(){
-                            break;
-                        }
-                    }
-                }
-                flows.push(flow_.to_string());
-                // println!("{:?}",flow.as_ref().unwrap().get(0).unwrap().as_str());
-                new_code.push_str(i);
-                new_code.push_str("\n");
-                let flow = if !flows.is_empty() {
-                    flows.get(flows.len() - 1).expect(format!("Current stack: {:?}",flows).as_str()).as_str()
-                } else {
-                    ""
-                };
-                //new_code.push_str(format!("flow_step(\"{}\",{:?})\n",flow,"start").as_str());
-                new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"start").as_str());
-            } else if i.ends_with("end"){
-                if !skips.is_empty() && !skips.pop().unwrap() {
-                    let flow = if !flows.is_empty() {
-                        flows.get(flows.len() - 1).expect(format!("Current stack: {:?}",flows).as_str()).as_str()
-                    } else {
-                        ""
-                    };
-                    //new_code.push_str(format!("flow_step(\"{}\",{:?})\n",flow,"stop").as_str());
-                    new_code.push_str(format!("flow_step({:?},{:?})\n",flow,"stop").as_str());
-                }
-                new_code.push_str(i);
-                flows.pop();
-                new_code.push_str("\n");
-            } else {
-                if is_unnecessary_start(i) {
-                    skips.push(true);
-                }
-                i.chars()
-                    .for_each(|x| {
-                    if x == ' '{
-                        spaces += 1;
-                    } 
-                }
-                );
-                new_code.push_str(i);
-                new_code.push_str("\n");
-            }
+            new_code.push_str(i);
+            new_code.push_str("\n");
         }
+        let mut rspec_code = String::new();
+        rspec_code.push_str("RSpec.configure do | config |\n");
+        rspec_code.push_str("config.before(:each) do |x| \n");
+        rspec_code.push_str("flow_start(x.description,\"start\")\n");
+        rspec_code.push_str("end\n");
+        rspec_code.push_str("config.after(:each) do |x| \n");
+        rspec_code.push_str("flow_start(x.description,\"start\")\n");
+        rspec_code.push_str("end\n");
+        rspec_code.push_str("end\n\n");
+        new_code.push_str(rspec_code.as_str());
         Some(new_code)
     }
 }
@@ -326,7 +264,7 @@ fn analyze_tree(root: &NodeType, args: &Args)  {
                         .create(true)
                         .open(file_path.as_str())
                         .expect("Unable to create output file for writing");
-            if x.name.as_str().ends_with("spec.rb") {
+            if x.name.as_str().ends_with("spec_helper.rb") {
                 let modified_code = x.modify().unwrap();
                 println!("Its a spec file");
                 file.write_all(modified_code.as_str().as_bytes()).expect("Unable to write to file");
