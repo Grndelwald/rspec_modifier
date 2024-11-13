@@ -93,10 +93,10 @@ impl CodeModifier for FileNode {
         let mut rspec_code = String::new();
         rspec_code.push_str("RSpec.configure do | config |\n");
         rspec_code.push_str("config.before(:each) do |x| \n");
-        rspec_code.push_str("flow_start(x.description,\"start\")\n");
+        rspec_code.push_str("flow_step(x.description,\"start\")\n");
         rspec_code.push_str("end\n");
         rspec_code.push_str("config.after(:each) do |x| \n");
-        rspec_code.push_str("flow_start(x.description,\"stop\")\n");
+        rspec_code.push_str("flow_step(x.description,\"stop\")\n");
         rspec_code.push_str("end\n");
         rspec_code.push_str("end\n\n");
         new_code.push_str(rspec_code.as_str());
